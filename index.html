@@ -511,6 +511,96 @@
             content: 'LINE Pay';
         }
 
+        /* Price Calculator Styles */
+        .calc-container {
+            background: white;
+            padding: 30px;
+            border-radius: 24px;
+            box-shadow: var(--shadow);
+            text-align: center;
+            max-width: 400px;
+            margin: 20px auto;
+            border: 1px solid rgba(255,255,255,0.8);
+        }
+        .calc-input {
+            width: 100%;
+            padding: 15px;
+            font-size: 1.2rem;
+            border: 2px solid #E2E8F0;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            text-align: center;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        .calc-input:focus {
+            border-color: var(--highlight-color);
+        }
+        .result-display {
+            font-size: 2.5rem;
+            font-weight: 800;
+            color: var(--primary-color);
+            margin: 15px 0 5px;
+        }
+        .result-subtext {
+            font-size: 0.9rem;
+            color: var(--light-text);
+            margin-bottom: 20px;
+            min-height: 1.4em;
+        }
+        .line-pay-option {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            margin-top: 15px;
+            padding: 15px;
+            background: #F8FAFC;
+            border-radius: 12px;
+            border: 2px solid #E2E8F0;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .line-pay-option:hover {
+            background-color: #F1F5F9;
+        }
+        .line-pay-option.checked {
+            background-color: #F0FFF4;
+            border-color: #06C755;
+        }
+        .custom-checkbox {
+            width: 24px;
+            height: 24px;
+            border-radius: 6px;
+            border: 2px solid #CBD5E0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            background: white;
+        }
+        .line-pay-option.checked .custom-checkbox {
+            background-color: #06C755;
+            border-color: #06C755;
+        }
+        .custom-checkbox::after {
+            content: '✓';
+            color: white;
+            font-size: 16px;
+            font-weight: bold;
+            display: none;
+        }
+        .line-pay-option.checked .custom-checkbox::after {
+            display: block;
+        }
+        .line-logo {
+            font-weight: 800;
+            color: #06C755;
+            font-family: 'Inter', sans-serif;
+            font-size: 1.1rem;
+            letter-spacing: -0.5px;
+        }
+
         @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
         
         ::-webkit-scrollbar { width: 6px; }
@@ -553,6 +643,9 @@
             
             <!-- Row 2: Utilities -->
             <nav class="tabs-row">
+                 <button class="tab-btn utility-btn" onclick="openDay('price-calc')">
+                    <span>💸</span> 價格估算
+                </button>
                  <button class="tab-btn utility-btn" onclick="openDay('tax-guide')">
                     <span>📄</span> 退稅指南
                 </button>
@@ -1516,6 +1609,30 @@
             <div class="hint-text">點擊卡片查看詳情</div>
         </div>
 
+        <!-- Price Calculation Page -->
+        <div id="price-calc" class="day-content">
+            <div class="calc-container">
+                <h2 style="font-size: 1.5rem; color: var(--primary-color); margin-bottom: 25px;">💸 價格估算</h2>
+                
+                <input type="number" id="krw-input" class="calc-input" placeholder="輸入韓元金額" inputmode="numeric">
+                
+                <div id="twd-result" class="result-display">約 NT$ 0</div>
+                <div id="discount-info" class="result-subtext"></div>
+
+                <div class="line-pay-option" id="line-pay-toggle">
+                    <div class="custom-checkbox"></div>
+                    <span class="line-logo">LINE Pay</span> 
+                </div>
+            </div>
+            
+            <div style="text-align: center; margin-top: 30px; color: #64748B; font-size: 0.9rem; line-height: 1.6;">
+                匯率基準：0.02335<br>
+                <span style="color: #06C755; font-weight: 600;">LINE Pay 優惠：</span><br>
+                消費 ≧ 190,000 KRW：享 32.5% 折扣<br>
+                消費 < 190,000 KRW：享 22.5% 折扣
+            </div>
+        </div>
+
         <!-- Tax Refund Guide Page -->
         <div id="tax-guide" class="day-content">
             <div class="tax-refund-guide">
@@ -1750,6 +1867,53 @@
                     targetEl.innerHTML = targetEl.innerHTML.replace(matches[0], `${matches[0]} <span style="font-size:0.9em; opacity:0.8; font-weight:500;">(約 NT$${twdFormatted})</span>`);
                 }
             });
+
+            // 3. Calculator Logic
+            const calcInput = document.getElementById('krw-input');
+            const resultDisplay = document.getElementById('twd-result');
+            const linePayToggle = document.getElementById('line-pay-toggle');
+            const discountInfo = document.getElementById('discount-info');
+            const calcRate = 0.02335; // Special rate for calculator
+
+            let isLinePayChecked = false;
+
+            function calculatePrice() {
+                const krw = parseFloat(calcInput.value);
+                
+                if (isNaN(krw) || krw === 0) {
+                    resultDisplay.innerText = "約 NT$ 0";
+                    discountInfo.innerText = "";
+                    return;
+                }
+
+                let finalTwd = krw * calcRate;
+                let discountText = "";
+
+                if (isLinePayChecked) {
+                    if (krw >= 190000) {
+                        // 32.5% discount
+                        const originalTwd = Math.round(finalTwd);
+                        finalTwd = finalTwd * (1 - 0.325);
+                        discountText = `原價 NT$${originalTwd.toLocaleString()} (折扣 32.5%)`;
+                    } else {
+                        // 22.5% discount
+                        const originalTwd = Math.round(finalTwd);
+                        finalTwd = finalTwd * (1 - 0.225);
+                        discountText = `原價 NT$${originalTwd.toLocaleString()} (折扣 22.5%)`;
+                    }
+                }
+
+                resultDisplay.innerText = `約 NT$ ${Math.round(finalTwd).toLocaleString()}`;
+                discountInfo.innerText = discountText;
+            }
+
+            calcInput.addEventListener('input', calculatePrice);
+
+            linePayToggle.addEventListener('click', () => {
+                isLinePayChecked = !isLinePayChecked;
+                linePayToggle.classList.toggle('checked', isLinePayChecked);
+                calculatePrice();
+            });
         });
 
         function updateWeather(dayId) {
@@ -1790,8 +1954,9 @@
 
             // Activate selected button
             let targetIndex = -1;
-            if (dayId === 'tax-guide') targetIndex = 4;
-            else if (dayId === 'toilet-map') targetIndex = 5;
+            if (dayId === 'price-calc') targetIndex = 4;
+            else if (dayId === 'tax-guide') targetIndex = 5;
+            else if (dayId === 'toilet-map') targetIndex = 6;
             else {
                 const num = parseInt(dayId.replace('day', ''));
                 if (!isNaN(num)) targetIndex = num - 1;
