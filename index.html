@@ -519,6 +519,7 @@
             box-shadow: var(--shadow);
             text-align: center;
             max-width: 400px;
+            width: 100%; /* 確保在小螢幕下寬度正確 */
             margin: 20px auto;
             border: 1px solid rgba(255,255,255,0.8);
         }
@@ -528,7 +529,7 @@
             font-size: 1.2rem;
             border: 2px solid #E2E8F0;
             border-radius: 12px;
-            margin-bottom: 20px;
+            margin-bottom: 15px;
             text-align: center;
             outline: none;
             transition: border-color 0.2s;
@@ -536,6 +537,28 @@
         .calc-input:focus {
             border-color: var(--highlight-color);
         }
+        
+        /* New styles for discount inputs */
+        .input-row {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        .small-input {
+            flex: 1;
+            padding: 12px;
+            font-size: 1rem;
+            border: 2px solid #E2E8F0;
+            border-radius: 12px;
+            text-align: center;
+            outline: none;
+            transition: border-color 0.2s;
+            min-width: 0; /* 關鍵修正：防止 Flex 子元素在小螢幕撐開容器 */
+        }
+        .small-input:focus {
+            border-color: var(--highlight-color);
+        }
+
         .result-display {
             font-size: 2.5rem;
             font-weight: 800;
@@ -547,19 +570,27 @@
             color: var(--light-text);
             margin-bottom: 20px;
             min-height: 1.4em;
+            white-space: pre-wrap; /* Allow line breaks */
         }
+        
+        .options-group {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+        }
+
         .line-pay-option {
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 12px;
-            margin-top: 15px;
-            padding: 15px;
+            gap: 8px;
+            padding: 12px 15px;
             background: #F8FAFC;
             border-radius: 12px;
             border: 2px solid #E2E8F0;
             cursor: pointer;
             transition: all 0.2s;
+            flex: 1;
         }
         .line-pay-option:hover {
             background-color: #F1F5F9;
@@ -568,9 +599,32 @@
             background-color: #F0FFF4;
             border-color: #06C755;
         }
+        
+        /* Tax Refund Button Style */
+        .tax-refund-option {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 12px 15px;
+            background: #F8FAFC;
+            border-radius: 12px;
+            border: 2px solid #E2E8F0;
+            cursor: pointer;
+            transition: all 0.2s;
+            flex: 1;
+        }
+        .tax-refund-option:hover {
+            background-color: #F1F5F9;
+        }
+        .tax-refund-option.checked {
+            background-color: #EFF6FF;
+            border-color: #3182CE;
+        }
+
         .custom-checkbox {
-            width: 24px;
-            height: 24px;
+            width: 20px;
+            height: 20px;
             border-radius: 6px;
             border: 2px solid #CBD5E0;
             display: flex;
@@ -583,22 +637,32 @@
             background-color: #06C755;
             border-color: #06C755;
         }
+        .tax-refund-option.checked .custom-checkbox {
+            background-color: #3182CE;
+            border-color: #3182CE;
+        }
         .custom-checkbox::after {
             content: '✓';
             color: white;
-            font-size: 16px;
+            font-size: 14px;
             font-weight: bold;
             display: none;
         }
-        .line-pay-option.checked .custom-checkbox::after {
+        .line-pay-option.checked .custom-checkbox::after,
+        .tax-refund-option.checked .custom-checkbox::after {
             display: block;
         }
         .line-logo {
             font-weight: 800;
             color: #06C755;
             font-family: 'Inter', sans-serif;
-            font-size: 1.1rem;
+            font-size: 1rem;
             letter-spacing: -0.5px;
+        }
+        .tax-text {
+            font-weight: 700;
+            color: #3182CE;
+            font-size: 1rem;
         }
 
         @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
@@ -1612,17 +1676,29 @@
         <!-- Price Calculation Page -->
         <div id="price-calc" class="day-content">
             <div class="calc-container">
-                <h2 style="font-size: 1.5rem; color: var(--primary-color); margin-bottom: 25px;">💸 價格估算</h2>
+                <h2 style="font-size: 1.5rem; color: var(--primary-color); margin-bottom: 20px;">💸 價格估算</h2>
                 
-                <input type="number" id="krw-input" class="calc-input" placeholder="輸入韓元金額" inputmode="numeric">
+                <input type="number" id="krw-input" class="calc-input" placeholder="輸入商品原價 (KRW)" inputmode="numeric">
                 
+                <div class="input-row">
+                    <input type="number" id="discount-percent" class="small-input" placeholder="折扣 % (例如 10)" inputmode="numeric">
+                    <input type="number" id="discount-amount" class="small-input" placeholder="折扣金額 (KRW)" inputmode="numeric">
+                </div>
+
+                <div class="options-group">
+                    <div class="line-pay-option" id="line-pay-toggle">
+                        <div class="custom-checkbox"></div>
+                        <span class="line-logo">LINE Pay</span> 
+                    </div>
+                    
+                    <div class="tax-refund-option" id="tax-refund-toggle">
+                        <div class="custom-checkbox"></div>
+                        <span class="tax-text">退稅 6%</span>
+                    </div>
+                </div>
+
                 <div id="twd-result" class="result-display">約 NT$ 0</div>
                 <div id="discount-info" class="result-subtext"></div>
-
-                <div class="line-pay-option" id="line-pay-toggle">
-                    <div class="custom-checkbox"></div>
-                    <span class="line-logo">LINE Pay</span> 
-                </div>
             </div>
             
             <div style="text-align: center; margin-top: 30px; color: #64748B; font-size: 0.9rem; line-height: 1.6;">
@@ -1870,48 +1946,87 @@
 
             // 3. Calculator Logic
             const calcInput = document.getElementById('krw-input');
+            const discPercentInput = document.getElementById('discount-percent');
+            const discAmountInput = document.getElementById('discount-amount');
             const resultDisplay = document.getElementById('twd-result');
             const linePayToggle = document.getElementById('line-pay-toggle');
+            const taxRefundToggle = document.getElementById('tax-refund-toggle');
             const discountInfo = document.getElementById('discount-info');
+            
             const calcRate = 0.02335; // Special rate for calculator
 
             let isLinePayChecked = false;
+            let isTaxRefundChecked = false;
 
             function calculatePrice() {
-                const krw = parseFloat(calcInput.value);
+                const baseKrw = parseFloat(calcInput.value);
                 
-                if (isNaN(krw) || krw === 0) {
+                if (isNaN(baseKrw) || baseKrw === 0) {
                     resultDisplay.innerText = "約 NT$ 0";
                     discountInfo.innerText = "";
                     return;
                 }
 
-                let finalTwd = krw * calcRate;
-                let discountText = "";
+                // 1. Apply Manual Discounts first
+                let currentKrw = baseKrw;
+                const discPercent = parseFloat(discPercentInput.value) || 0;
+                const discAmount = parseFloat(discAmountInput.value) || 0;
+                
+                // Apply Amount discount then Percent discount (common logic, or vice versa doesn't matter much if inputs are usually separate)
+                // Let's deduct fixed amount first, then percentage.
+                if (discAmount > 0) currentKrw -= discAmount;
+                if (discPercent > 0) currentKrw = currentKrw * (1 - discPercent / 100);
+                
+                if (currentKrw < 0) currentKrw = 0;
 
+                let infoTextParts = [];
+
+                // 2. Apply Line Pay Discount
                 if (isLinePayChecked) {
-                    if (krw >= 190000) {
-                        // 32.5% discount
-                        const originalTwd = Math.round(finalTwd);
-                        finalTwd = finalTwd * (1 - 0.325);
-                        discountText = `原價 NT$${originalTwd.toLocaleString()} (折扣 32.5%)`;
+                    let rate = 0;
+                    if (currentKrw >= 190000) {
+                        rate = 0.325; // 32.5% off
+                        infoTextParts.push(`LINE Pay 折扣 32.5%`);
                     } else {
-                        // 22.5% discount
-                        const originalTwd = Math.round(finalTwd);
-                        finalTwd = finalTwd * (1 - 0.225);
-                        discountText = `原價 NT$${originalTwd.toLocaleString()} (折扣 22.5%)`;
+                        rate = 0.225; // 22.5% off
+                        infoTextParts.push(`LINE Pay 折扣 22.5%`);
                     }
+                    currentKrw = currentKrw * (1 - rate);
                 }
 
-                resultDisplay.innerText = `約 NT$ ${Math.round(finalTwd).toLocaleString()}`;
-                discountInfo.innerText = discountText;
+                // 3. Apply Tax Refund (6%)
+                if (isTaxRefundChecked) {
+                    currentKrw = currentKrw * (1 - 0.06); // Deduct 6%
+                    infoTextParts.push(`退稅 6%`);
+                }
+
+                // Final Conversion
+                const finalTwd = Math.round(currentKrw * calcRate);
+                const originalTwd = Math.round(baseKrw * calcRate);
+
+                resultDisplay.innerText = `約 NT$ ${finalTwd.toLocaleString()}`;
+                
+                if (baseKrw !== currentKrw) {
+                    discountInfo.innerHTML = `原價約 NT$${originalTwd.toLocaleString()}<br>${infoTextParts.join(' + ')}`;
+                } else {
+                    discountInfo.innerText = "";
+                }
             }
 
-            calcInput.addEventListener('input', calculatePrice);
+            // Add Listeners
+            [calcInput, discPercentInput, discAmountInput].forEach(el => {
+                el.addEventListener('input', calculatePrice);
+            });
 
             linePayToggle.addEventListener('click', () => {
                 isLinePayChecked = !isLinePayChecked;
                 linePayToggle.classList.toggle('checked', isLinePayChecked);
+                calculatePrice();
+            });
+            
+            taxRefundToggle.addEventListener('click', () => {
+                isTaxRefundChecked = !isTaxRefundChecked;
+                taxRefundToggle.classList.toggle('checked', isTaxRefundChecked);
                 calculatePrice();
             });
         });
